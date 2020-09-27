@@ -30,7 +30,11 @@ const promoSchema = new Schema({
         type: String,
         required: true
     }
-});
+},
+    {
+        timestamps: true
+    }
+);
 
 var Promos = mongoose.model('Promos', promoSchema);
 

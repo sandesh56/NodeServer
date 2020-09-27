@@ -26,7 +26,11 @@ const leaderSchema = new Schema({
         type: String,
         required: true
     }
-});
+},
+    {
+        timestamps: true
+    }
+);
 
 var Leader = mongoose.model('Leader', leaderSchema);
 module.exports = Leader;
