@@ -55,7 +55,7 @@ exports.verifyOrdinaryUser = function (req, res, next) {
                 return next(err);
             } else {
                 req.decoded = decoded;
-                console.log(decoded); // use this to log decoded items
+                // console.log(decoded); // use this to log decoded items
                 next();
             }
         });
