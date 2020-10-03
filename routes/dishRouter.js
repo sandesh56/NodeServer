@@ -21,7 +21,7 @@ dishRouter.route('/')
             .catch(err => next(err));
     })
 
-    .post(authenticate.verifyUser, (req, res, next) => {
+    .post(authenticate.verifyOrdinaryUser, authenticate.verifyAdmin, (req, res, next) => {
         Dishes.create(req.body)
             .then((dish) => {
                 console.log("Created : ", dish);
@@ -32,12 +32,12 @@ dishRouter.route('/')
             .catch(err => next(err));
     })
 
-    .put(authenticate.verifyUser, (req, res, next) => {
+    .put(authenticate.verifyOrdinaryUser, authenticate.verifyAdmin, (req, res, next) => {
         res.statusCode = 403;
-        res.end('cannot be deployed a put operation');
+        res.end('Put operation is not supported');
     })
 
-    .delete(authenticate.verifyUser, (req, res, next) => {
+    .delete(authenticate.verifyOrdinaryUser, authenticate.verifyAdmin, (req, res, next) => {
         Dishes.deleteOne({})
             .then((result) => {
                 console.log("deleted");
@@ -49,7 +49,7 @@ dishRouter.route('/')
     });
 
 
-//FOR DISHID
+// FOR DISHID
 
 dishRouter.route('/:dishId')
     .get((req, res, next) => {
@@ -63,11 +63,11 @@ dishRouter.route('/:dishId')
             }, (err) => next(err))
             .catch(err => next(err));
     })
-    .post(authenticate.verifyUser, (req, res, next) => {
+    .post(authenticate.verifyOrdinaryUser, authenticate.verifyAdmin, (req, res, next) => {
         res.statusCode = 403;
         res.end("Doesnot support Post Operation on " + req.params.dishId);
     })
-    .put(authenticate.verifyUser, (req, res, next) => {
+    .put(authenticate.verifyOrdinaryUser, authenticate.verifyAdmin, (req, res, next) => {
         Dishes.findByIdAndUpdate(req.params.dishId, {
             $set: req.body
         }, { new: true })
@@ -80,7 +80,7 @@ dishRouter.route('/:dishId')
             .catch(err => next(err));
     })
 
-    .delete(authenticate.verifyUser, (req, res, next) => {
+    .delete(authenticate.verifyOrdinaryUser, authenticate.verifyAdmin, (req, res, next) => {
         Dishes.findByIdAndRemove(req.params.dishId)
             .then((resp) => {
                 res.statusCode = 200;
@@ -109,7 +109,7 @@ dishRouter.route('/:dishId/comments')
             }, (err) => next(err))
             .catch((err) => next(err));
     })
-    .post(authenticate.verifyUser, (req, res, next) => {
+    .post(authenticate.verifyOrdinaryUser, (req, res, next) => {
         Dishes.findById(req.params.dishId)
             .then((dish) => {
                 if (dish != null) {
@@ -132,12 +132,12 @@ dishRouter.route('/:dishId/comments')
             }, (err) => next(err))
             .catch((err) => next(err));
     })
-    .put(authenticate.verifyUser, (req, res, next) => {
+    .put(authenticate.verifyOrdinaryUser, authenticate.verifyAdmin, (req, res, next) => {
         res.statusCode = 403;
         res.end('PUT operation not supported on /dishes/'
             + req.params.dishId + '/comments');
     })
-    .delete(authenticate.verifyUser, (req, res, next) => {
+    .delete(authenticate.verifyOrdinaryUser, authenticate.verifyAdmin, (req, res, next) => {
         Dishes.findById(req.params.dishId)
             .then((dish) => {
                 if (dish != null) {
@@ -183,15 +183,21 @@ dishRouter.route('/:dishId/comments/:commentId')
             }, (err) => next(err))
             .catch((err) => next(err));
     })
-    .post(authenticate.verifyUser, (req, res, next) => {
+    .post(authenticate.verifyOrdinaryUser, (req, res, next) => {
         res.statusCode = 403;
         res.end('POST operation not supported on /dishes/' + req.params.dishId
             + '/comments/' + req.params.commentId);
     })
-    .put(authenticate.verifyUser, (req, res, next) => {
+    .put(authenticate.verifyOrdinaryUser, (req, res, next) => {
         Dishes.findById(req.params.dishId)
             .then((dish) => {
                 if (dish != null && dish.comments.id(req.params.commentId) != null) {
+                    //Here it checks weather the operation is performed by individual user and allows only post belongs to them
+                    if (dish.comments.id(req.params.commentId).author.username != req.decoded.username) {
+                        var err = new Error("you dont have previliges to update comment");
+                        err.status = 401;
+                        return next(err);
+                    }
                     if (req.body.rating) {
                         dish.comments.id(req.params.commentId).rating = req.body.rating;
                     }
@@ -220,10 +226,16 @@ dishRouter.route('/:dishId/comments/:commentId')
             }, (err) => next(err))
             .catch((err) => next(err));
     })
-    .delete(authenticate.verifyUser, (req, res, next) => {
+    .delete(authenticate.verifyOrdinaryUser, (req, res, next) => {
         Dishes.findById(req.params.dishId)
             .then((dish) => {
                 if (dish != null && dish.comments.id(req.params.commentId) != null) {
+                    //Here it checks weather the operation is performed by individual user and allows only post belongs to them
+                    if (dish.comments.id(req.params.commentId).author._id.username != req.decoded.username) {
+                        var err = new Error("you dont have previliges to delete comment");
+                        err.status = 401;
+                        return next(err);
+                    }
                     dish.comments.id(req.params.commentId).remove();
                     dish.save()
                     Dishes.findById(dish._id)

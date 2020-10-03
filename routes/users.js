@@ -8,10 +8,20 @@ const bodyParser = require('body-parser');
 const { token } = require('morgan');
 router.use(bodyParser.json());
 
-/* GET users listing. */
-router.get('/', function (req, res, next) {
-  res.send('respond with a resource');
-});
+
+//user monitering
+
+router.get('/', authenticate.verifyOrdinaryUser, authenticate.verifyAdmin, (req, res, next) => {
+  User.find({}, (err, users) => {
+    if (err) {
+      return next(err);
+    } else {
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/json");
+      res.json(users)
+    }
+  })
+})
 
 //POST OPERATION FOR signup
 router.post('/signup', (req, res) => {
@@ -50,7 +60,7 @@ router.post('/signup', (req, res) => {
 
 
 router.post('/login', passport.authenticate('local'), (req, res) => {
-  var token = authenticate.getToken({ _id: req.user._id });
+  var token = authenticate.getToken({ user: req.user });
   res.statusCode = 200;
   res.setHeader('Content-Type', 'application/json');
   res.json({ success: true, token: token, status: 'You are successfully logged in!' });

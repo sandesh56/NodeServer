@@ -19,7 +19,12 @@ var leaderRouter = require('./routes/leaderRouter');
 const mongoose = require('mongoose');
 
 const url = config.mongoUrl;
-const connect = mongoose.connect(url, { useNewUrlParser: true });
+
+mongoose.set('useNewUrlParser', true);
+mongoose.set('useFindAndModify', false);
+mongoose.set('useCreateIndex', true);
+
+const connect = mongoose.connect(url, { useUnifiedTopology: true });
 
 connect.then((db) => {
   console.log("Connected correctly to server");
