@@ -67,6 +67,16 @@ router.post('/login', cors.corsWithOptions, passport.authenticate('local'), (req
   res.json({ success: true, token: token, status: 'You are successfully logged in!' });
 });
 
+router.get('/facebook/token', passport.authenticate('facebook-token'), (req, res) => {
+  var token = authenticate.getToken({ user: req.user });
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'application/json');
+  res.json({ success: true, token: token, status: 'You are successfully logged in!' });
+})
+
+
+
+
 //LOGOUT
 
 router.get('/logout', (req, res) => {
